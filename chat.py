@@ -2,24 +2,19 @@
 from flask import Flask, render_template, request, session, redirect, url_for, copy_current_request_context
 from flask_socketio import join_room, leave_room, send, SocketIO
 import random
-from string import ascii_uppercase
 import torch
 import markdown
 from transformers import BertTokenizer, BertForSequenceClassification
-from transformers import AutoModelForCausalLM, AutoTokenizer,pipeline
-from transformers import GenerationConfig, TextStreamer, pipeline
 import google.generativeai as genai
-from inspect import cleandoc
-from textwrap import dedent
 import string
-from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 
 print('app starting')
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hjhjsdahhds"
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*", engineio_logger=True, logger=True, async_mode='eventlet')
+
 
 rooms = {}
 
@@ -81,6 +76,58 @@ certainty_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 certainty_model.to(device)
 
+# phi2_model_name = "models/phi-2"
+# phi2_model = AutoModelForCausalLM.from_pretrained(phi2_model_name)
+# phi2_tokenizer = AutoTokenizer.from_pretrained(phi2_model_name, trust_remote_code =True)
+# phi2_pipeline = pipeline("text-generation", model=phi2_model, tokenizer=phi2_tokenizer)
+# phi2_model.to(device)
+
+# SYSTEM_PROMPT = """
+# Analyze a negotiation dialogue to identify non-negotiable terms and suggest alternative strategies.
+# """
+
+# generation_config = GenerationConfig.from_pretrained(phi2_model_name)
+# generation_config.max_new_tokens = 512
+# generation_config.temperature = 0.001
+# generation_config.do_sample = True
+
+# streamer = TextStreamer(phi2_tokenizer, skip_prompt=True, skip_special_tokens=True)
+
+# llm = pipeline(
+#     "text-generation",
+#     model=phi2_model,
+#     tokenizer=phi2_tokenizer,
+#     # max_new_tokens = 512,
+#     eos_token_id=phi2_tokenizer.eos_token_id,
+#     pad_token_id=phi2_tokenizer.eos_token_id,
+#     streamer=streamer,
+#     )
+
+# def create_suggestion_prompt(prompt: str, system_prompt: str = SYSTEM_PROMPT)-> str:
+#     """
+#     Creates a prompt for the phi-2 model to generate alternative negotiation strategies based on the conversation.
+
+#     Parameters:
+#     conversation (list of str): The conversation history, where each item is a message string.
+
+#     Returns:
+#     str: A prompt string for the phi-2 model.
+#     """
+#     if not system_prompt:
+#         return cleandoc(
+#             f"""
+#         Instruct: {prompt}
+#         Output:
+#         """
+#         )
+#     return cleandoc(
+#         f"""
+#         Instruct: {system_prompt} {prompt}
+#         Output:
+#         """
+#     )
+
+
 CERTAINTY_SEQUENCE_THRESHOLD = 1
 last_active_user = {}
 
@@ -121,16 +168,18 @@ def handle_message(data):
     all_messages = sum(rooms[room]["messages_by_user"].values(), [])
     print('all messages :' , all_messages)
     
-    @copy_current_request_context
-    def background_generate_middle_ground(all_messages, room):
-        generate_middle_ground(all_messages, room)
+    # @copy_current_request_context
+    # def background_generate_middle_ground(all_messages, room):
+    #     generate_middle_ground(all_messages, room)
 
-    # Create a copy of the current request context to use in the background task
-    @copy_current_request_context
-    def background_generate_and_send_suggestion(user_messages, room, user):
-        generate_and_send_suggestion(user_messages, room, user)
+    # # Create a copy of the current request context to use in the background task
+    # @copy_current_request_context
+    # def background_generate_and_send_suggestion(user_messages, room, user):
+    #     generate_and_send_suggestion(user_messages, room, user)
         
-    background_task(background_generate_middle_ground, all_messages, room)
+    # background_task(background_generate_middle_ground, all_messages, room)
+    
+    generate_middle_ground(all_messages, room)
     
     user_messages = rooms[room]["messages_by_user"][user]
     overall_certainty, individual_predictions = predict_certainty_conversation(user_messages, certainty_model, certainty_tokenizer)
@@ -140,16 +189,17 @@ def handle_message(data):
         # if len(certainty_history) >= CERTAINTY_SEQUENCE_THRESHOLD and all(certainty_history[-CERTAINTY_SEQUENCE_THRESHOLD:]):
             # if len(certainty_history) == CERTAINTY_SEQUENCE_THRESHOLD or not all(certainty_history[-CERTAINTY_SEQUENCE_THRESHOLD-1:-1]):
         if len(certainty_history) >= CERTAINTY_SEQUENCE_THRESHOLD:
-            background_task(background_generate_and_send_suggestion, user_messages, room, user)
+            generate_and_send_suggestion(user_messages, room, user)
 
     send({"name": session.get("name"), "message": message_text, "certainty": "Certain" if overall_certainty else "Not Certain"}, to=room)
 
+    
 def generate_and_send_suggestion(user_messages, room, user):
     print('calling function generate prompt')
     conversation_context = " ".join(user_messages[:-1]) if len(user_messages) > 1 else "The conversation has focused primarily on price negotiations."
     non_negotiable_statement = user_messages[-1]
     
-    genai.configure(api_key="ENTER YOUR API KEY") #generate a api key and enter it here
+    genai.configure(api_key="YOUR-API-KEY")
     model = genai.GenerativeModel('gemini-pro')
 
     prompt = f"""
@@ -214,7 +264,7 @@ def to_html(markdown_text):
 
 def generate_middle_ground(user_messages, room):
     print('middle ground function has been called')
-    genai.configure(api_key="ENTER YOUR API KEY") # generate a api key and put it here
+    genai.configure(api_key="YOUR-API-KEY")
     model = genai.GenerativeModel('gemini-pro')
     
     # Combine user messages into a single string for analysis
@@ -320,4 +370,4 @@ def disconnect():
     print(f"{name} has left the room {room}")
 
 if __name__ == "__main__":
-    socketio.run(app ,debug=True ,port=8080)
+    socketio.run(app,port=8080)
