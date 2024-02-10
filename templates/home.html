@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat App</title>
+  <link rel="stylesheet" href="{{url_for('static', filename='css/home.css')}}" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+</head>
+
+<body>
+  <div class="flexi">
+    <div class="theme-switch-wrapper">
+      <label class="theme-switch" for="checkbox">
+        <input type="checkbox" id="checkbox" />
+        <div class="slider round"></div>
+      </label>
+    </div>
+    <div class="form-container">
+      <form method="post" class="chat-form">
+        <h3>Welcome to the secure negotiation room</h3>
+        <div class="form-group">
+          <label for="name"
+            style="font-size: 13px; font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">Username:
+          </label>
+          <input type="text" placeholder="Pick a name!" name="name" value="{{name}}" />
+        </div>
+        <div class="form-group">
+          <label for="code"
+            style="font-size: 13px; font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">Room
+            code: </label>
+          <input type="text" placeholder="Room Code" name="code" value="{{code}}" />
+          <button type="submit" name="join" id = "myBtn" class="join-btn" style="margin-top: 30px;">Join a Room</button>
+        </div>
+        <button type="submit" name="create" class="create-btn">Create a Room</button>
+    </div>
+  </div>
+
+  <!-- Add this inside the <body> tag -->
+  <div id="animation-overlay" class="overlay hidden">
+    <div class="lock-animation">
+      <div class="wrapper">
+        <div class="base">
+          <div class="base-bottom">
+          </div>
+          <div class="lock-inside-top">
+          </div>
+          <div class="lock-inside-bottom">
+          </div>
+        </div>
+        <div class="lock-cirlce">
+          <div class="lock-circle-inside">
+          </div>
+        </div>
+        <div class="lock-box">
+        </div>
+      </div>
+
+      <p>You have now entered a secure negotiation room</p>
+    </div>
+  </div>
+
+
+  {% if error %}
+  <div class="error-message">{{error}}</div>
+  {% endif %}
+  </form>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+  
+    document.getElementById('checkbox').addEventListener('change', function (event) {
+      if (this.checked) {
+        document.body.classList.add("dark-mode");
+        document.cookie = "darkMode=true; path=/;"; // Set the cookie
+      } else {
+        document.body.classList.remove("dark-mode");
+        document.cookie = "darkMode=false; path=/;"; // Update the cookie
+      }
+    });
+    $(document).ready(function () {
+      $('form.chat-form').submit(function (event) {
+        event.preventDefault();
+
+        const name = $('input[name=name]').val();
+        document.cookie = "name=" + name + "; path=/;"; // Set the cookie with the name value
+        const code = $('input[name=code]').val();
+        const isCreate = $('button[name="create"]').is(':focus'); // Check if create button was clicked
+        const isJoin = $('button[name="join"]').is(':focus');  // Check if join button was clicked
+
+        const formData = {
+          'name': name,
+          'code': code,
+          'create': isCreate,
+          'join': isJoin
+        };
+
+        // Show the animation overlay
+        $('#animation-overlay').removeClass('hidden').addClass('visible');
+        setTimeout(function () {
+          // AJAX request to the server
+          $.ajax({
+            type: 'POST',
+            url: '/',
+            data: formData,
+            dataType: 'json',
+            encode: true
+          }).done(function (data) {
+            // Hide the animation overlay
+            $('#animation-overlay').addClass('hidden').removeClass('visible');
+
+            if (data.redirect) {
+              // Redirect to the new room
+              window.location.href = data.redirect;
+            } else if (data.error) {
+              // Display error message
+              alert(data.error); // Or update your HTML to display the error message
+            }
+          }).fail(function (jqXHR, textStatus, errorThrown) {
+            // In case of AJAX request failure
+            $('#animation-overlay').addClass('hidden').removeClass('visible');
+            alert('Failed to process request: ' + textStatus);
+          });
+        }, 3000);
+      });
+    });
+  </script>
+  <!-- <nav>
+        <div class="heading">
+          <p>The Negotiation Room</p> 
+        </div>
+        <div class="theme-switch-wrapper">
+          <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider round"></div>
+          </label>
+        </div>
+      </nav>
+      <div class="chat-container">
+        <div id="chatbox">
+      </div>
+        <div class="first-chat-input">
+          <div class="input_area">
+            <input type="text" id="user_input" placeholder="Type your message here...">
+            <button class = "send-button" type="submit">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav>
+    </div>  -->
+
+
+
+</body>
+</html>

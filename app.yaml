@@ -1,0 +1,23 @@
+runtime: custom
+env: flex
+
+# automatic_scaling:
+#   max_instances: 5
+
+resources:
+  cpu: 4
+  memory_gb: 32
+  disk_size_gb: 60
+  
+
+# Optional environment variables you might need
+# env_variables:
+#   MODEL_PATH: "models/certainty_prediction_model"
+
+# Define a health check endpoint (optional)
+# health_check:
+#   check_interval_sec: 15
+#   timeout_sec: 5
+#   healthy_threshold: 2
+#   unhealthy_threshold: 2
+#   restart_threshold: 2

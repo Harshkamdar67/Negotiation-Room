@@ -1,0 +1,1288 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Negotiation Room</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+
+  <style>
+    .page {
+      display: flex;
+      flex-direction: row;
+      margin: 0;
+      padding: 0;
+    }
+
+    .assistant {
+      width: 40vw;
+      height: 100vh;
+      border-right: 2px solid black;
+    }
+
+    .neg-room {
+      width: 60vw;
+      height: 100vh;
+    }
+
+    .heading {
+      text-align: center;
+      margin: 0;
+      margin-right: 20px;
+    }
+
+    p {
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    img {
+      height: 10px;
+      width: 20px;
+    }
+
+    .first-chat-input {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      margin: 10px;
+      padding: 10px;
+    }
+
+    input {
+      border: 2px solid rgb(232, 226, 226);
+      border-radius: 2px;
+    }
+
+
+    body {
+      transition: background-color 0.5s ease;
+      background-color: white;
+      color: black;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.dark-mode {
+      background-color: #333;
+      color: white;
+    }
+
+    .theme-switch-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px;
+      /* Reduced margin for a more compact layout */
+    }
+
+    .theme-switch {
+      display: inline-block;
+      height: 7px;
+      /* Reduced height */
+      position: relative;
+      width: 12.5px;
+      /* Reduced width */
+    }
+
+    .theme-switch input {
+      display: none;
+    }
+
+    .slider {
+      background-color: #ccc;
+      bottom: 0;
+      cursor: pointer;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      transition: .4s;
+    }
+
+    .slider:before {
+      background-color: white;
+      background-image: url("https://static.vecteezy.com/system/resources/previews/019/806/320/non_2x/moon-graphic-clipart-design-free-png.png");
+      bottom: 1px;
+      /* Adjusted for reduced height */
+      content: "";
+      height: 5px;
+      /* Adjusted for reduced height */
+      left: 1px;
+      /* Adjusted for consistency */
+      position: absolute;
+      transition: .4s;
+      width: 5px;
+      /* Adjusted for reduced width */
+    }
+
+    input:checked+.slider {
+      background-color: #000000;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(6px);
+      /* Adjusted for the new slider width */
+    }
+
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    input {
+      width: 150px;
+    }
+
+    #chatbox {
+      padding: 10px;
+      height: 170px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      /* Newest messages at the bottom */
+    }
+
+    .chat-bubble {
+      background-color: #f1f1f1;
+      border-radius: 16px;
+      padding: 10px 15px;
+      color: #333;
+      margin: 5px;
+      max-width: 80%;
+      word-wrap: break-word;
+      align-self: flex-end;
+      /* Align to the right */
+    }
+
+    .input-area {
+      display: flex;
+    }
+
+    .message {
+      flex-grow: 1;
+      padding: 10px;
+      margin-right: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    .send-button {
+      padding: 3px 10px;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    #send-button:hover {
+      background-color: #0056b3;
+    }
+
+    .message-box {
+      text-align: center;
+    }
+
+    /* The Modal (background) */
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 1;
+      /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 300px;
+      /* Square width */
+      height: 300px;
+      /* Square height */
+      text-align: center;
+      box-shadow: 0 4px 8px 0 rgba(0÷, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+      /* Optional: for better appearance */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    /* If the close button is not positioned correctly, you may need to adjust it */
+    .close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+
+    /* If the close button is not positioned correctly, you may need to adjust it */
+    .close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+
+    /* The Close Button */
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p>Chat Room: {{code}}</p>
+      <button id="copyButton">Copy</button>
+    </div>
+  </div>
+  <div class="message-box">
+    <h2>Chat Room: {{code}}</h2>
+  </div>
+  <div class="page">
+    <div class="assistant">
+      <p>Your Assistant</p>
+    </div>
+    <div class="neg-room">
+      <nav>
+        <div class="heading">
+          <p>The Negotiation Room</p>
+        </div>
+        <div class="theme-switch-wrapper">
+          <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider round"></div>
+          </label>
+        </div>
+      </nav>
+      <div class="chat-container">
+        <div id="chatbox">
+        </div>
+        <div class="first-chat-input">
+          <div class="input_area">
+            <input type="text" id="message" name="message" placeholder="Type your message here...">
+            <button class="send-button" type="submit" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav>
+  </div>
+  </div>
+  <script type="text/javascript">
+    console.log("running js of room.html")
+    var socketio = io();
+
+    const messages = document.getElementById("message");
+    console.log(messages)
+
+    const createMessage = (name, msg) => {
+      console.log(name, msg)
+      const content = `
+  <div class="text">
+      <span>
+          <strong>${name}</strong>: ${msg}
+      </span>
+      <span class="muted">
+          ${new Date().toLocaleString()}
+      </span>
+  </div>
+  `;
+      messages.innerHTML += content;
+    };
+
+    console.log(messages)
+    socketio.on("message", (data) => {
+      createMessage(data.name, data.message);
+      console.log("message created")
+    });
+
+    const sendMessage = () => {
+      const message = document.querySelector("#message");
+      console.log(message)
+      if (message.value == "") return;
+      socketio.emit("message", { data: message.value });
+      console.log(message.value)
+      console.log("sent message")
+    };
+
+  </script>
+  {% for msg in messages %}
+  <script type="text/javascript">
+    createMessage("{{msg.name}}", "{{msg.message}}");
+    console.log("ending harsh js")
+  </script>
+  {% endfor %}
+  <script>
+    console.log("starting shivam js")
+    document.getElementById('checkbox').addEventListener('change', function (event) {
+      if (this.checked) {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+    });
+
+    function createBubble(text) {
+      var bubble = document.createElement('div');
+      bubble.classList.add('chat-bubble');
+      bubble.textContent = text;
+      var chatContainer = document.getElementById('chatbox');
+      chatContainer.appendChild(bubble); // Append bubble at the end
+
+      // Scroll to the bottom of the chat container
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+
+    document.querySelector('.send-button').addEventListener('click', function () {
+      var input = document.getElementById('message');
+      if (input.value.trim() !== '') { // Check if the input is not just whitespace
+        createBubble(input.value);
+        createMessage(input.name, input.value)
+        input.value = ''; // Clear the input field
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+      // Get the modal
+      var modal = document.getElementById('myModal');
+
+      // Show the modal as soon as the page loads
+      modal.style.display = 'block';
+
+      // Get the <span> element that closes the modal
+      var span = document.getElementsByClassName('close')[0];
+
+      // Get the copy button
+      var copyBtn = document.getElementById('copyButton');
+
+      // When the user clicks on <span> (x), close the modal
+      span.addEventListener('click', function () {
+        modal.style.display = 'none';
+      });
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.addEventListener('click', function (event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Copy text function
+      copyBtn.addEventListener('click', function () {
+        navigator.clipboard.writeText('{{code}}').then(function () {
+          console.log('Copying to clipboard was successful!');
+        }, function (err) {
+          console.error('Could not copy text: ', err);
+        });
+      });
+    });
+
+     // Function to add a suggestion
+    function addSuggestion(suggestion) {
+      const newDiv = document.createElement("div");
+      newDiv.textContent = suggestion;
+      newDiv.classList.add("suggestion");
+      const assistantDiv = document.querySelector(".assistant");
+      assistantDiv.appendChild(newDiv);
+    }
+
+    // Function to request a suggestion from the Flask backend
+    function requestSuggestion(prompt) {
+      fetch('/get-suggestion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({prompt: prompt}),
+      })
+      .then(response => response.json())
+      .then(data => {
+        addSuggestion(data.suggestion);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    }
+
+  </script>
+</body>
+
+</html>
+</head> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Negotiation Room</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+
+    .page {
+      display: flex;
+      flex-direction: row;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+  height: 100%;
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #333333; /* Dark background for the whole page */
+  color: white; /* Light text for the whole page */
+}
+
+/* Styling for the assistant sidebar */
+.assistant {
+  background-color: #2A2C31; /* Dark background for the assistant section */
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 40%; /* Adjust the width as per your design */
+  height: 100vh;
+  box-sizing: border-box; /* Include padding in the width */
+}
+
+/* Assistant header */
+.assistant-header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+/* Room code section */
+.room-code {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.room-code-value {
+  background-color: #40444B;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 30px; /* Space before the message area starts */
+  display: inline-block; /* Makes it not stretch full width */
+}
+.assistant-message-area {
+  height: calc(100vh - 160px); 
+  padding: 20px;
+  border-radius: 10px;
+  overflow-y: auto; 
+  /* margin-top: 20px;  */
+  flex-direction: column;
+}
+
+.chat-container {
+  flex-grow: 1; 
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px); 
+  margin: 20px 20px 0 20px; 
+}
+
+#chatbox {
+  flex-grow: 1;
+  overflow-y: auto; 
+  padding: 10px;
+  margin-bottom: 70px;
+}
+
+.first-chat-input {
+  position: absolute;
+  bottom: 0; 
+  right: 0;
+  left: 0; 
+  padding: 10px;
+  /* background-color: #333740;  */
+}
+
+
+.first-chat-input .input_area {
+  display: flex;
+}
+
+input#message {
+  flex-grow: 1;
+  border-radius: 20px;
+  padding: 10px 20px;
+  margin-right: 10px;
+}
+
+button.send-button {
+  border-radius: 20px;
+  padding: 10px 20px;
+}
+
+
+    .neg-room {
+      position: relative;
+  width: 65%; 
+  height: 100vh; 
+  display: flex;
+  flex-direction: column;
+    }
+
+    .heading {
+      text-align: center;
+      margin: 0;
+      margin-right: 20px;
+    }
+
+    p {
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    img {
+      height: 10px;
+      width: 20px;
+    }
+
+    .first-chat-input {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      margin: 10px;
+      padding: 10px;
+    }
+
+    input {
+      border: 2px solid rgb(232, 226, 226);
+      border-radius: 2px;
+    }
+
+
+    body {
+      transition: background-color 0.5s ease;
+      background-color: white;
+      color: black;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.dark-mode {
+      background-color: #333;
+      color: white;
+    }
+
+    .dark-mode {
+      background-color: #333;
+      color: white;
+    }
+
+    body.dark-mode {
+  background-color: #333;
+  color: #FFF; 
+}
+
+body.dark-mode .modal-content {
+  background-color: #2A2C31; 
+  color: #FFF; 
+}
+
+body.dark-mode .code-block {
+  background-color: #40444B; 
+  color: #FFF; 
+}
+
+body.dark-mode .modal-btn {
+  background-color: #4CAF50; 
+}
+
+body.dark-mode .close {
+  color: #CCC; 
+}
+
+body.dark-mode .copy-notification {
+  background-color: rgba(255, 255, 255, 0.7); 
+  color: #333; 
+}
+
+    .theme-switch-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px;
+      /* Reduced margin for a more compact layout */
+    }
+
+    .theme-switch {
+      display: inline-block;
+      height: 7px;
+      /* Reduced height */
+      position: relative;
+      width: 12.5px;
+      /* Reduced width */
+    }
+
+    .theme-switch input {
+      display: none;
+    }
+
+    .slider {
+      background-color: #ccc;
+      bottom: 0;
+      cursor: pointer;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      transition: .4s;
+    }
+    
+    .slider:before {
+      background-color: #ffffff;
+      background-image: url("https://static.vecteezy.com/system/resources/previews/019/806/320/non_2x/moon-graphic-clipart-design-free-png.png");
+      bottom: 1px;
+      /* Adjusted for reduced height */
+      content: "";
+      height: 5px;
+      /* Adjusted for reduced height */
+      left: 1px;
+      /* Adjusted for consistency */
+      position: absolute;
+      transition: .4s;
+      width: 5px;
+      /* Adjusted for reduced width */
+    }
+
+    input:checked+.slider {
+      background-color: #000000;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(6px);
+      /* Adjusted for the new slider width */
+    }
+
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+
+    input {
+      width: 150px;
+    }
+
+    #chatbox {
+      padding: 10px;
+      height: 50%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      /* Newest messages at the bottom */
+    }
+
+    .chat-bubble {
+      background-color: #f1f1f1;
+      border-radius: 16px;
+      padding: 10px 15px;
+      color: #333;
+      margin: 5px;
+      max-width: 80%;
+      word-wrap: break-word;
+      align-self: flex-end;
+      /* Align to the right */
+    }
+
+    .input-area {
+      display: flex;
+    }
+
+    .message {
+      flex-grow: 1;
+      padding: 10px;
+      margin-right: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    .send-button {
+      padding: 3px 10px;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    #send-button:hover {
+      background-color: #0056b3;
+    }
+
+    .message-box {
+      text-align: center;
+    }
+
+    /* Background Overlay */
+    .modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
+  animation: fadeIn 0.5s; /* Animation for the overlay */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 40px;
+  border-radius: 8px;
+  border: none;
+  width: 50%;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  position: relative;
+  animation: popIn 0.5s;
+}
+
+/* Style for individual code blocks */
+.code-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.code-block {
+  background-color: #e8e8e8;
+  margin: 0 10px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  display: inline-block;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* General button styling */
+.modal-btn {
+  border: none;
+  padding: 10px 20px;
+  margin-top: 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s;
+}
+
+/* Specific styles for copy button */
+#copyButton {
+  background-color: #007bff;
+  color: white;
+}
+
+#copyButton:hover {
+  background-color: #0056b3;
+}
+
+/* Specific styles for close button */
+.close-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.close-btn:hover {
+  background-color: #d32f2f;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  color: #aaa;
+}
+
+.close:hover {
+  color: #333;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+    .chat-bubble-self {
+  background-color: #dcf8c6; /* Light green background for self */
+  align-self: flex-end; /* Align to the right */
+}
+
+  .chat-bubble-other {
+    background-color: #f1f1f1; /* Light grey background for others */
+    align-self: flex-start; /* Align to the left */
+  }
+
+  .suggestion-box {
+      background-color: rgb(169, 245, 126);
+      /* Other styles for suggestion message box */
+    }
+    
+    .middle-ground-box {
+      background-color: rgb(47, 225, 68);
+      /* Other styles for middle ground message box */
+    }
+
+    .room-code-container {
+  position: relative; /* Establishes a new position context for absolute children */
+}
+
+.copy-notification {
+  display: none; 
+  position: absolute; /* Position it relative to the room-code-container */
+  bottom: -30px; /* Position it just below the room code */
+  left: 0; /* Align to the left side of room-code-container */
+  background-color: rgba(50, 50, 50, 0.7); /* Translucent grey background */
+  padding: 8px 16px;
+  border-radius: 5px;
+  color: white;
+  text-align: center;
+  z-index: 10; /* Make sure it's on top of other elements, adjust if necessary */
+  white-space: nowrap; /* Prevent wrapping */
+  font-size: 0.875rem; /* Smaller font size */
+}
+.message-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.message-container.self-message .chat-bubble {
+  align-self: flex-end;
+  /* Additional self-message styles */
+}
+
+.message-container.other-message .chat-bubble {
+  align-self: flex-start;
+  /* Additional other-message styles */
+}
+
+.user-name {
+  font-weight: bold;
+  margin-bottom: 2px; /* Space between the name and the chat bubble */
+}
+
+/* For bubbles aligned to the right (self messages) */
+.message-container.self-message .user-name {
+  text-align: right;
+  align-self: flex-end;
+}
+
+/* For bubbles aligned to the left (other messages) */
+.message-container.other-message .user-name {
+  text-align: left;
+  align-self: flex-start;
+}
+
+.chat-bubble-self, .chat-bubble-other {
+  /* Your existing styles for chat bubbles */
+  padding: 10px;
+  border-radius: 16px;
+  max-width: 80%;
+  /* Additional styles as needed */
+}
+
+
+  </style>
+</head>
+
+<body>
+  <div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Join a negotiation</h2>
+      </div>
+      <div class="modal-body">
+        <p>To join the negotiation, enter the following code into the chatroom. This is a unique code that you can only use once.</p>
+        <div class="code-container">
+          {% for char in code %}
+          <span class="code-block">{{ char }}</span>
+          {% endfor %}
+        </div>
+        <p>You can also copy the code to your clipboard by clicking the button below</p>
+        <button id="copyButton" class="modal-btn">Copy code</button>
+        <button class="modal-btn close-btn" class="closeBtn" onclick="closeModal()">Close</button>
+        <a id="whatsappLink" href="javascript:void(0)" onclick="sendWhatsAppMessage()">
+          <img src="static/icons8-whatsapp-50.png" alt="whatsapp" style="height: 50px; width: 50px; margin-bottom: -15px; margin-right: 10px;">
+        </a>
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <!-- <div class="message-box">
+    <h2>Chat Room: {{code}}</h2>
+  </div> -->
+  <div class="page">
+    <div class="assistant">
+      <div class="assistant-header">Assistant</div>
+      <div class="room-code">Room Code</div>
+      <div class="room-code-container">
+        <div class="room-code-value" style="width: 90%;">
+        {{code}} <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16" onclick="copyCodeToClipboard()" style="cursor: pointer;">
+          <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+        </svg>
+      </div>
+      <div id="copy-notification" class="copy-notification">Code copied to clipboard!</div>
+    </div>
+
+
+      <div class="assistant-message-area">
+        <!-- Assistant messages go here -->
+      </div>
+    </div>
+    <!-- Continue with the rest of your page -->
+    
+    <div class="neg-room">
+      <nav>
+        <div class="heading">
+          <p>The Negotiation Room</p>
+        </div>
+      </nav>
+      <div class="chat-container">
+        <div id="chatbox">
+        </div>
+        <div class="first-chat-input">
+          <div class="input_area">
+            <input type="text" id="message" name="message" placeholder="Type your message here...">
+            <button class="send-button" type="submit" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav>
+  </div>
+  </div>
+  <script type="text/javascript">
+    console.log("running js of room.html")
+    var socketio = io();
+
+    const messages = document.getElementById("message");
+    console.log(messages)
+
+    const createMessage = (name, msg) => {
+      console.log(name, msg)
+      const content = `
+  <div class="text">
+      <span>
+          <strong>${name}</strong>: ${msg}
+      </span>
+      <span class="muted">
+          ${new Date().toLocaleString()}
+      </span>
+  </div>
+  `;
+      messages.innerHTML += content;
+    };
+
+    console.log(messages)
+  
+  function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+  
+function sendWhatsAppMessage() {
+    var phoneNumber = prompt("Please enter your phone number (including country code):");
+    if (phoneNumber) {
+        var currentUrl = window.location.href;
+        var message = "Join the negotiation with this code: {{code}}. Link: " + currentUrl;
+        var whatsappLink = "whatsapp://send?text=" + encodeURIComponent(message) + "&phone=+91" + encodeURIComponent(phoneNumber);
+        document.getElementById("whatsappLink").setAttribute("href", whatsappLink);
+        window.location.href = whatsappLink; // Open WhatsApp
+    }
+}
+
+function createUserMessage(name, msg) {
+  var chatbox = document.getElementById("chatbox");
+  
+  // Create container for entire message block
+  var messageContainer = document.createElement("div");
+  messageContainer.classList.add("message-container");
+
+  // Create element for user name
+  var userNameElement = document.createElement("div");
+  userNameElement.classList.add("user-name");
+  userNameElement.textContent = name;
+  messageContainer.appendChild(userNameElement); // Append the name to the container
+
+  // Create chat bubble for the message
+  var messageElement = document.createElement("div");
+  messageElement.classList.add("chat-bubble");
+  
+  // Compare the name from the cookie to the name passed to the function
+  var currentUserName = getCookie('name');
+  if (name.toLowerCase() === currentUserName.toLowerCase()) {
+      messageElement.classList.add("chat-bubble-self");
+      messageContainer.classList.add("self-message"); // Additional class for styling
+  } else {
+      messageElement.classList.add("chat-bubble-other");
+      messageContainer.classList.add("other-message"); // Additional class for styling
+  }
+
+  messageElement.textContent = msg; // Add the text content to the bubble
+  messageContainer.appendChild(messageElement); // Append the bubble to the container
+
+  chatbox.appendChild(messageContainer); // Append the entire message block to the chatbox
+
+  // Scroll to the bottom of the chatbox each time a new message is added
+  chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+
+  function copyCodeToClipboard() {
+  const roomCode = document.querySelector('.room-code-value').textContent.trim();
+  navigator.clipboard.writeText(roomCode)
+    .then(() => {
+      // Display the notification
+      const notification = document.getElementById('copy-notification');
+      notification.style.display = 'block';
+      
+      // Hide the notification after 3 seconds
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+      
+      console.log('Code copied to clipboard!');
+    })
+    .catch(err => {
+      console.error('Error copying text to clipboard: ', err);
+    });
+}
+
+
+
+  function createSystemMessage(msg, messageType) {
+  var assistantDiv = document.querySelector(".assistant-message-area");
+  
+  // Define unique IDs for different message types
+  var messageElementId = messageType === 'suggestion' ? 'assistant-suggestion-message' : 'assistant-middle-ground-message';
+
+  // Define classes for different message types
+  var messageElementClass = messageType === 'suggestion' ? 'suggestion-box' : 'middle-ground-box';
+  
+  // Check if the message element already exists
+  var existingMessageElement = document.getElementById(messageElementId);
+  
+  // Create a new message element or clear the existing one
+  var messageElement;
+  if (existingMessageElement) {
+      messageElement = existingMessageElement;
+      messageElement.innerHTML = `<strong>Assistant</strong>: `; // Clear existing content
+      messageElement.className = `chat-bubble ${messageElementClass}`; // Reset the class
+  } else {
+      messageElement = document.createElement("div");
+      messageElement.id = messageElementId; // Assign the unique ID
+      messageElement.className = `chat-bubble ${messageElementClass}`; // Assign the class
+      messageElement.innerHTML = `<strong>Assistant</strong>: `;
+      messageElement.style.width = '100%'
+      assistantDiv.appendChild(messageElement);
+  }
+
+  // Stream the message word by word
+  streamMessage(msg, messageElement);
+}
+
+function streamMessage(message, element) {
+  element.innerHTML = message; 
+}
+
+// Adjust your socket.io message event listener
+socketio.on("message", (data) => {
+    if (data.name === "System") {
+        createSystemMessage(data.message, data.messageType);
+    } else {
+        createUserMessage(data.name, data.message);
+    }
+    console.log("Message received and displayed");
+});
+
+const sendMessage = () => {
+      const message = document.querySelector("#message");
+      console.log(message)
+      if (message.value == "") return;
+      socketio.emit("message", { data: message.value });
+      console.log(message.value)
+      console.log("sent message")
+    };
+
+    
+  </script>
+  {% for msg in messages %}
+  <script type="text/javascript">
+    createMessage("{{msg.name}}", "{{msg.message}}");
+    console.log("ending harsh js")
+  </script>
+  {% endfor %}
+  <script>
+    console.log("starting shivam js")
+  
+    // Check if the darkMode cookie is set to true
+    var darkMode = getCookie('darkMode');
+    if (darkMode === "true") {
+        document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
+    }
+
+    document.querySelector('.send-button').addEventListener('click', function () {
+      var input = document.getElementById('message');
+      if (input.value.trim() !== '') { // Check if the input is not just whitespace
+        createMessage(input.name, input.value)
+        input.value = ''; // Clear the input field
+      }
+    });
+    function closeModal(){
+      var modal = document.getElementById('myModal');
+      modal.style.display = 'none'
+    }
+    document.addEventListener('DOMContentLoaded', (event) => {
+      // Get the modal
+      var modal = document.getElementById('myModal');
+
+      // Show the modal as soon as the page loads
+      modal.style.display = 'block';
+
+      // Get the <span> element that closes the modal
+      var span = document.getElementsByClassName('close')[0];
+
+      // Get the copy button
+      var copyBtn = document.getElementById('copyButton');
+
+      
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.addEventListener('click', function (event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Check if the darkMode cookie is set to true
+      var darkMode = getCookie('darkMode');
+      var modal = document.getElementById('myModal');
+      if (darkMode === "true") {
+          modal.classList.add("dark-mode"); // Add dark-mode class to the modal
+      } else {
+          modal.classList.remove("dark-mode"); // Remove dark-mode class from the modal
+      }   
+
+      // Copy text function
+      copyBtn.addEventListener('click', function () {
+        navigator.clipboard.writeText('{{code}}').then(function () {
+          console.log('Copying to clipboard was successful!');
+        }, function (err) {
+          console.error('Could not copy text: ', err);
+        });
+      });
+    });
+
+
+    
+  </script>
+</body>
+
+</html>
+</head>
