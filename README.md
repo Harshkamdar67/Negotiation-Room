@@ -1,4 +1,4 @@
-# PROJECT - NEGOTIATION ROOM 
+# PROJECT - NEGOTIATION ENGINE 
 
 An application to achieve convergence of both parties in their negotiation by giving helpful suggestions and middle ground without any bias.
 
