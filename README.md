@@ -7,9 +7,10 @@ Developers : Harsh Kamdar & Shivam Gupta
 
 # Interface Screenshots : 
 
+<img width="1280" alt="image" src="https://github.com/Harshkamdar67/Negotiation-Room/assets/109721120/032e0295-b961-4152-8f4a-0ed653bd968b">
+
 <img width="1280" alt="image" src="https://github.com/Harshkamdar67/Negotiation-Room/assets/109721120/254f2a31-4213-42a0-96e1-5eb151b1dd6d">
 
-<img width="1280" alt="image" src="https://github.com/Harshkamdar67/Negotiation-Room/assets/109721120/032e0295-b961-4152-8f4a-0ed653bd968b">
 
 
 
